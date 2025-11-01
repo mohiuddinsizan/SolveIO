@@ -1,0 +1,68 @@
+.tabs { display:flex; gap:10px; margin-bottom: 12px; }
+.tab { padding:8px 12px; border:1px solid var(--border); border-radius: 10px; cursor:pointer; background: var(--surface); box-shadow: var(--shadow-3d); }
+.tab.active { border-color: #32405a; transform: translateY(-1px); }
+
+.order-list { display:grid; gap: 12px; }
+.order-card { padding:14px; border:1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-3d); }
+.order-head { display:flex; align-items:center; justify-content:space-between; }
+.order-meta { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.small { font-size: 13px; color: var(--text-dim); }
+
+.chat { display:flex; flex-direction:column; gap:10px; }
+.chat-box { height: 260px; overflow:auto; padding:10px; border:1px solid var(--border); border-radius:12px; background:#101624; box-shadow: var(--shadow-3d); }
+.msg { padding:8px 10px; border-radius:10px; margin:3px 0; max-width: 80%; box-shadow: var(--shadow-3d); }
+.me  { background:#1a2540; align-self:flex-end; }
+.them{ background:#172030; align-self:flex-start; }
+.chat-row { display:flex; gap:8px; }
+/* ====== Chat visual clarity ====== */
+/* ===== Messenger-style chat with timestamps ===== */
+.chat-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.msg-row {
+  display: flex;
+  width: 100%;
+}
+
+.msg-row.me { justify-content: flex-end; }
+.msg-row.them { justify-content: flex-start; }
+
+.msg-bubble {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  line-height: 1.4;
+  font-size: 14px;
+  word-wrap: break-word;
+  position: relative;
+}
+
+/* mine = right (blue) */
+.msg-row.me .msg-bubble {
+  background: #1877f2;
+  color: #fff;
+  border-top-right-radius: 4px;
+}
+
+/* theirs = left (gray) */
+.msg-row.them .msg-bubble {
+  background: #f1f0f0;
+  color: #222;
+  border-top-left-radius: 4px;
+}
+
+/* timestamp */
+.msg-time {
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.7;
+  text-align: right;          /* aligns under the bubble’s content edge */
+}
+
+.msg-row.them .msg-time { text-align: left; }

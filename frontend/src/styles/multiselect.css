@@ -1,0 +1,46 @@
+.ms {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ms-label { font-weight: 600; color: var(--text); }
+.ms-box {
+  background: #0f1420;
+  border: 1px solid #2a3447;
+  border-radius: 12px;
+  padding: 8px;
+  cursor: text;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), var(--shadow-3d);
+}
+.ms-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 10px; border-radius: 999px;
+  background: #162235; border: 1px solid #2b3a52; color: #9eb6e1;
+  font-size: 12px; font-weight: 600;
+}
+.ms-pill button {
+  background: none; border: none; color: #9eb6e1; cursor: pointer; font-size: 14px;
+}
+
+.ms-input {
+  border: none; outline: none; background: transparent; color: var(--text);
+  padding: 6px 8px; min-width: 120px; flex: 1;
+}
+
+.ms-menu {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-3d);
+  max-height: 260px; overflow: auto; padding: 6px;
+  z-index: 30;
+}
+.ms-item { padding: 8px 10px; border-radius: 8px; cursor: pointer; color: var(--text-dim); }
+.ms-item:hover { background: #141a24; color: var(--text); }
+.ms-empty { padding: 10px; color: var(--text-dim); }

@@ -1,0 +1,15 @@
+.nav {
+  position: sticky; top: 0; z-index: 20;
+  backdrop-filter: blur(6px);
+  background: rgba(10,13,19,0.6);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-3d);
+}
+.nav-inner {
+  max-width: var(--container); margin: 0 auto; padding: 14px 24px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.brand { font-weight: 700; letter-spacing: -0.02em; font-size: 18px; color: #eaf1ff; }
+.nav-actions { display:flex; align-items:center; gap: 14px; }
+.link { color: var(--text-dim); font-weight: 600; }
+.link:hover { color: var(--text); }

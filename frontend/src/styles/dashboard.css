@@ -1,0 +1,9 @@
+.section { margin-top: 28px; }
+.cards { display:grid; gap: 18px; grid-template-columns: repeat(3, minmax(0,1fr)); }
+@media (max-width: 900px) { .cards { grid-template-columns: 1fr; } }
+
+.kpi {
+  display:flex; flex-direction:column; gap:6px;
+}
+.kpi .label { color: var(--text-dim); font-weight: 600; }
+.kpi .value { font-size: 22px; font-weight: 700; }

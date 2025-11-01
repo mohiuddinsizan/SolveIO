@@ -1,0 +1,36 @@
+.profile-wrap { max-width: 960px; margin: 0 auto; padding: 24px 0; }
+.profile-header {
+  display: flex; gap: 24px; align-items: center; margin-bottom: 24px;
+  padding: 24px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); box-shadow: var(--shadow), var(--inset-shadow);
+  transition: box-shadow 0.3s ease;
+}
+.profile-header:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), var(--inset-shadow); }
+.avatar {
+  width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(145deg, #1b2436, #101827);
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 32px; color: var(--text-primary);
+  box-shadow: var(--shadow);
+}
+.meta { display: flex; gap: 12px; flex-wrap: wrap; color: var(--text-secondary); }
+.meta .chip { background: linear-gradient(145deg, #162235, #0f172a); border: 1px solid #2b3a52; padding: 6px 14px; border-radius: 999px; font-weight: 500; transition: background 0.2s ease; display: flex; align-items: center; gap: 4px; }
+.meta .chip:hover { background: linear-gradient(145deg, #1e2a42, #162235); }
+.section-card {
+  margin-top: 24px; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); box-shadow: var(--shadow), var(--inset-shadow);
+  transition: box-shadow 0.3s ease;
+}
+.section-card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), var(--inset-shadow); }
+.star { font-size: 20px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.4)); }
+.star.off { opacity: .4; }
+.save-row { display: flex; gap: 12px; align-items: center; }
+.earn-grid { display: grid; gap: 20px; grid-template-columns: repeat(3, 1fr); }
+.earn-card { padding: 20px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--background); box-shadow: var(--shadow), var(--inset-shadow); transition: box-shadow 0.3s ease, transform 0.3s ease; }
+.earn-card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), var(--inset-shadow); transform: translateY(-2px); }
+.label { color: var(--text-secondary); font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+.value { font-size: 28px; font-weight: 700; margin-top: 8px; color: var(--text-primary); }
+/* Additional colors from stats.css can be imported or duplicated if needed */
+.text-success { color: var(--c-held) !important; }
+.text-info { color: var(--c-payout) !important; }
+.text-warning { color: #f59e0b !important; }
+.text-danger { color: var(--c-fee) !important; }
+.text-primary { color: var(--text-primary) !important; }
