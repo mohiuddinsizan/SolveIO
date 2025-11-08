@@ -259,8 +259,6 @@ router.get("/social/dm/:userId", requireAuth, listDMMessages);
 router.post("/social/dm/:userId", requireAuth, sendDM);
 
 
-router.get("/users/:id", requireAuth, getUserPublic);
-
 // Public user read/search (auth required to keep consistent with your app)
 router.get("/users/:id", requireAuth, getUserPublic);
 router.get("/users", requireAuth, searchUsers); // /users?q=alice&page=1&limit=20
