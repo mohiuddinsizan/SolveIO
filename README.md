@@ -269,4 +269,4 @@ POST /ai/find-jobs
 ---
 
 ## 🧾 License
-**MIT (or your preferred)**
+**MIT**
