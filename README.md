@@ -1,23 +1,3 @@
-A production-ready Node/Express + MongoDB backend for a Fiverr-style marketplace with AI-assisted job creation/search, escrow & wallets, courses (with Cloudinary uploads or FFmpeg fallback), social graph & DMs, real-time job chats, and rich stats.
-
-You asked to include every API — all routes/controllers you shared are fully documented below.
-
-🧱 Tech Stack
-
-Runtime: Node.js (ESM)
-
-Framework: Express
-
-DB: MongoDB + Mongoose
-
-Auth: JWT (HMAC) + role middleware
-
-AI: Google Generative Language API (Gemini)
-
-Uploads/Media: Cloudinary (images & videos) or local + FFmpeg/HLS fallback
-
-Other: bcryptjs, multer, node-fetch
-
 ⚙️ Quick Start
 1. Install
 npm install
@@ -208,3 +188,7 @@ Find Jobs
 
 POST /ai/find-jobs
 { "prompt": "nextjs ecommerce landing", "minBudget": 200 }
+
+🧾 License
+
+MIT (or your preferred).
