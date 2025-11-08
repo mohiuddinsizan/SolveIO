@@ -1,3 +1,4 @@
+// frontend/src/pages/AnalyticsAdmin.jsx
 import { useEffect, useMemo, useState } from "react";
 import api from "../lib/api";
 
@@ -13,6 +14,9 @@ import {
   Legend,
   BarChart,
   Bar,
+  PieChart,
+  Pie,
+  Cell
 } from "recharts";
 
 import "../styles/stats.css";
@@ -66,6 +70,14 @@ export default function AnalyticsAdmin() {
     label: d?.label ?? "",
     Profit: Number(d?.value || 0),
   })) : [], [data]);
+
+  // pie data for orders
+  const pieData = useMemo(() => ([
+    { name: "Open", value: jobs.open },
+    { name: "In Progress", value: inProgress },
+    { name: "Completed", value: jobs.completed },
+    { name: "Disputed", value: jobs.disputed },
+  ]), [jobs, inProgress]);
 
   // bar data for orders
   const ordersBars = useMemo(() => ([
@@ -128,13 +140,28 @@ export default function AnalyticsAdmin() {
         <div className="chart-card">
           <div className="chart-title">Orders by Status</div>
           <ResponsiveContainer width="100%" height={280}>
+            <PieChart>
+              <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={100} label>
+                {pieData.map((_, idx) => <Cell key={idx} fill={COLORS[idx % COLORS.length]} />)}
+              </Pie>
+              <Legend />
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="chart-card">
+          <div className="chart-title">Orders by Status (Bar)</div>
+          <ResponsiveContainer width="100%" height={280}>
             <BarChart data={ordersBars}>
               <CartesianGrid strokeDasharray="4 4" />
               <XAxis dataKey="name" />
               <YAxis allowDecimals={false} />
               <Tooltip />
               <Legend />
-              <Bar dataKey="value" name="Count" fill={COLORS[2]} />
+              <Bar dataKey="value" name="Count">
+                {ordersBars.map((_, idx) => <Cell key={idx} fill={COLORS[idx % COLORS.length]} />)}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>

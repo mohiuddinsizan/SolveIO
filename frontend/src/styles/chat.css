@@ -1,0 +1,262 @@
+/* ===========================
+   Direct Messages (Chat) CSS
+   =========================== */
+
+/* -------- Theme tokens -------- */
+:root {
+  --bg: #0B1020;            /* app background */
+  --card: #0F162B;          /* card panels */
+  --border: #1D2A45;        /* borders */
+  --muted: #9BB0D3;         /* helper text */
+  --ink: #E8F1FF;           /* main text on dark */
+
+  --accent: #2A7BF9;        /* primary accent */
+  --accent-ghost: color-mix(in oklab, var(--accent) 30%, transparent);
+
+  --bubble-them: #151F36;         /* incoming bubble */
+  --bubble-them-border: #243659;
+  --bubble-me: #2166F3;           /* outgoing bubble */
+  --bubble-me-border: #1B56CC;
+
+  --sep-bg: #0F162B;        /* day-separator bg */
+}
+
+/* ---------- Layout shells ---------- */
+.dm-wrap { max-width: 960px; }
+
+.dm-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 70vh;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Messenger-like fixed pane (fills viewport height below your header) */
+.dm-card.dm-fixed {
+  height: calc(100vh - 140px); /* adjust 140px if your top nav/footer height changes */
+  min-height: 520px;
+}
+
+/* ---------- Header ---------- */
+.dm-header {
+  display: grid;
+  grid-template-columns: 120px 1fr 120px;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+}
+.dm-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* ---------- Search & sections (DM list view) ---------- */
+.dm-search {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dm-section {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+}
+.dm-section:first-of-type { border-top: none; }
+
+.dm-section-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* ---------- People / Conversation rows ---------- */
+.dm-people-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dm-user-row {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  color: var(--ink);
+  text-decoration: none;
+  background: #0E1730;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: background .15s ease, border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.dm-user-row:hover {
+  background: #111D3A;
+  transform: translateY(-1px);
+}
+.dm-user-row.unread {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-ghost);
+}
+
+.dm-user-meta { overflow: hidden; }
+.dm-user-name { font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dm-time { font-size: 12px; color: var(--muted); }
+
+/* Small unread dot/badge (used next to names) */
+.badge-dot {
+  font-size: 11px;
+  color: #fff;
+  background: var(--accent);
+  border: 1px solid var(--bubble-me-border);
+  border-radius: 999px;
+  padding: 0 6px;
+  line-height: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ---------- Chat body (scrollable) ---------- */
+.dm-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  /* soft gradient backdrop */
+  background:
+    radial-gradient(1100px 380px at 60% -140px, rgba(42,123,249,0.16), rgba(11,16,32,0) 60%) no-repeat,
+    linear-gradient(var(--bg), var(--bg));
+}
+
+/* Loader shown at top while fetching older messages */
+.dm-loader-top {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 8px 0 4px;
+}
+
+/* ---------- Day separator ---------- */
+.dm-sep {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0;
+}
+.dm-sep > span {
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--sep-bg);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+/* ---------- Message rows & bubbles ---------- */
+.dm-row {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+  align-items: flex-end;
+}
+.dm-row.me { flex-direction: row-reverse; }
+
+.dm-bubble {
+  max-width: min(72%, 560px);
+  padding: 10px 12px;
+  border-radius: 14px;
+  position: relative;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  line-height: 1.4;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+}
+
+/* Incoming */
+.dm-row.them .dm-bubble {
+  background: var(--bubble-them);
+  border: 1px solid var(--bubble-them-border);
+  color: var(--ink);
+  border-bottom-left-radius: 4px;
+}
+
+/* Outgoing */
+.dm-row.me .dm-bubble {
+  background: var(--bubble-me);
+  border: 1px solid var(--bubble-me-border);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.dm-bubble-name {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.dm-row.me .dm-bubble-name { display: none; }
+
+.dm-bubble-time {
+  font-size: 11px;
+  opacity: 0.9;
+  margin-top: 6px;
+  text-align: right;
+}
+
+/* ---------- Avatars ---------- */
+.avatar-sm {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #142449;
+  border: 1px solid #21345A;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #E1ECFF;
+  flex: none;
+}
+.me-badge {
+  background: var(--bubble-me);
+  border-color: var(--bubble-me-border);
+  color: #fff;
+}
+
+/* ---------- Composer (sticks to bottom of card) ---------- */
+.dm-composer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid var(--border);
+  background: var(--card);
+}
+
+/* ---------- Utilities ---------- */
+.muted { color: var(--muted); }
+
+/* ---------- Responsive tweaks ---------- */
+@media (max-width: 720px) {
+  .dm-header {
+    grid-template-columns: 90px 1fr 90px;
+  }
+  .dm-user-row {
+    grid-template-columns: 32px 1fr auto;
+    padding: 8px;
+  }
+  .dm-bubble { max-width: 88%; }
+}
+
+/* ---------- Motion preference ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .dm-user-row:hover { transform: none; }
+  .dm-user-row,
+  .dm-bubble { transition: none !important; }
+}

@@ -1,68 +1,90 @@
-.tabs { display:flex; gap:10px; margin-bottom: 12px; }
-.tab { padding:8px 12px; border:1px solid var(--border); border-radius: 10px; cursor:pointer; background: var(--surface); box-shadow: var(--shadow-3d); }
-.tab.active { border-color: #32405a; transform: translateY(-1px); }
+/* Surface tokens reused */
+:root {
+  --panel: #0f172a;
+  --panel-2: #111827;
+  --panel-3: #1f2937;
+  --border: #233047;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --ring: #38d39f;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 10px 25px rgba(0,0,0,0.25);
+  --shadow-sm: 0 6px 14px rgba(0,0,0,0.2);
+}
 
-.order-list { display:grid; gap: 12px; }
-.order-card { padding:14px; border:1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-3d); }
-.order-head { display:flex; align-items:center; justify-content:space-between; }
-.order-meta { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-.small { font-size: 13px; color: var(--text-dim); }
+/* ---------- Tabs ---------- */
+.tabs {
+  display: flex; gap: 10px; margin-bottom: 16px;
+  background: linear-gradient(135deg, var(--panel), var(--panel-3));
+  padding: 10px; border-radius: var(--radius);
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+}
+.tab {
+  padding: 10px 16px; border: 1px solid var(--border);
+  border-radius: 10px; cursor: pointer; background: #0e1525;
+  box-shadow: inset 0 1px 3px rgba(255,255,255,0.05);
+  transition: transform .15s ease, box-shadow .25s ease, border-color .2s ease;
+  font-weight: 700; color: var(--text);
+}
+.tab:hover { transform: translateY(-3px); box-shadow: var(--shadow-sm); }
+.tab.active {
+  background: var(--panel-3); color: #fff; border-color: color-mix(in srgb, var(--ring) 25%, var(--border));
+  box-shadow: var(--shadow-sm);
+}
 
-.chat { display:flex; flex-direction:column; gap:10px; }
-.chat-box { height: 260px; overflow:auto; padding:10px; border:1px solid var(--border); border-radius:12px; background:#101624; box-shadow: var(--shadow-3d); }
-.msg { padding:8px 10px; border-radius:10px; margin:3px 0; max-width: 80%; box-shadow: var(--shadow-3d); }
-.me  { background:#1a2540; align-self:flex-end; }
-.them{ background:#172030; align-self:flex-start; }
-.chat-row { display:flex; gap:8px; }
-/* ====== Chat visual clarity ====== */
-/* ===== Messenger-style chat with timestamps ===== */
+/* ---------- Order list ---------- */
+.order-list { display: grid; gap: 16px; }
+.order-card {
+  padding: 16px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--panel), var(--panel-3));
+  box-shadow: var(--shadow-sm), inset 0 -1px 3px rgba(255,255,255,0.05);
+  transition: transform .18s ease, box-shadow .25s ease, border-color .2s ease;
+}
+.order-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+  border-color: color-mix(in srgb, var(--ring) 20%, var(--border));
+}
+.order-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.job-title { font-size: 18px; font-weight: 800; color: var(--text); }
+.order-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.small {
+  font-size: 12.5px; color: var(--text-dim); background: #0e1525;
+  padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border);
+}
+
+/* ---------- Chat (messenger style) ---------- */
+.chat { display: flex; flex-direction: column; gap: 10px; }
 .chat-box {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 10px;
-  max-height: 400px;
-  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 10px; max-height: 420px; overflow-y: auto;
+  border: 1px solid var(--border); border-radius: 14px; background: #0b1220;
+  box-shadow: var(--shadow-sm), inset 0 1px 3px rgba(255,255,255,0.04);
 }
-
-.msg-row {
-  display: flex;
-  width: 100%;
-}
-
-.msg-row.me { justify-content: flex-end; }
+.msg-row { display: flex; width: 100%; }
+.msg-row.me   { justify-content: flex-end; }
 .msg-row.them { justify-content: flex-start; }
 
 .msg-bubble {
-  max-width: 75%;
-  padding: 10px 14px;
-  border-radius: 16px;
-  line-height: 1.4;
-  font-size: 14px;
-  word-wrap: break-word;
-  position: relative;
+  max-width: 76%; padding: 10px 14px; border-radius: 16px;
+  line-height: 1.5; font-size: 14px; word-wrap: break-word; position: relative;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+  border: 1px solid var(--border);
 }
-
-/* mine = right (blue) */
 .msg-row.me .msg-bubble {
-  background: #1877f2;
-  color: #fff;
-  border-top-right-radius: 4px;
+  background: #1b2336; color: #f8fafc; border-top-right-radius: 6px;
 }
-
-/* theirs = left (gray) */
 .msg-row.them .msg-bubble {
-  background: #f1f0f0;
-  color: #222;
-  border-top-left-radius: 4px;
+  background: #101827; color: #d1d5db; border-top-left-radius: 6px;
 }
-
-/* timestamp */
 .msg-time {
-  margin-top: 4px;
-  font-size: 11px;
-  opacity: 0.7;
-  text-align: right;          /* aligns under the bubble’s content edge */
+  margin-top: 6px; font-size: 11px; opacity: .7; text-align: right; color: var(--text-dim);
 }
-
 .msg-row.them .msg-time { text-align: left; }
+
+.chat-row { display: flex; gap: 8px; }

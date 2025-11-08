@@ -1,0 +1,153 @@
+/* Header row: title + search */
+.people-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.people-search {
+  display: flex;
+  gap: 8px;
+}
+.people-search-input { min-width: 260px; }
+
+/* Results meta */
+.people-meta {
+  margin: 8px 0 12px 0;
+  font-size: 13px;
+}
+
+/* Grid layout */
+.people-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 1100px) {
+  .people-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .people-grid { grid-template-columns: 1fr; }
+}
+
+/* Card */
+.person-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #2b3444;
+  background: #0b1020;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+}
+.person-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -14px rgba(0,0,0,0.6);
+  border-color: #3b465a;
+  background: #0e1426;
+}
+
+/* Top line: avatar + name/email */
+.person-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.person-nameline {
+  display: grid;
+  gap: 2px;
+}
+.person-name {
+  color: #e5e7eb;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.person-sub {
+  font-size: 13px;
+}
+
+/* Avatar with subtle gradient ring */
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #1f2937, #0f172a);
+  color: #cbd5e1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.avatar.ring {
+  box-shadow:
+    0 0 0 2px #0b1020,          /* inner cutout to match card bg */
+    0 0 0 3px #334155;          /* outer ring */
+}
+
+/* Bottom meta: role + joined */
+.person-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Role pill */
+.role-pill {
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 999px;
+  letter-spacing: .02em;
+  border: 1px solid transparent;
+}
+.role-employer { background: rgba(99, 102, 241, .15); color: #c7d2fe; border-color: rgba(99, 102, 241, .35); }
+.role-worker   { background: rgba(16, 185, 129, .15); color: #a7f3d0; border-color: rgba(16, 185, 129, .35); }
+.role-admin    { background: rgba(239, 68, 68,  .15); color: #fecaca; border-color: rgba(239, 68, 68,  .35); }
+.role-user     { background: rgba(148, 163, 184,.15); color: #e2e8f0; border-color: rgba(148, 163, 184,.35); }
+
+/* Empty state */
+.people-empty {
+  grid-column: 1 / -1;
+  border: 1px dashed #334155;
+  border-radius: 12px;
+  padding: 28px;
+  text-align: center;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.5);
+}
+.people-empty-icon { font-size: 28px; margin-bottom: 8px; }
+.people-empty-title { font-weight: 800; color: #e5e7eb; margin-bottom: 4px; }
+.people-empty-sub { font-size: 13px; }
+
+/* Skeletons */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #0b1020;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+.skeleton-line {
+  height: 12px;
+  background: #111827;
+  border-radius: 6px;
+}
+.skeleton-line.w-60 { width: 60%; }
+.skeleton-line.w-40 { width: 40%; }
+.skeleton-pill {
+  width: 90px; height: 24px; border-radius: 999px; background: #111827; display: inline-block;
+}

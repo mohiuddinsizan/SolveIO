@@ -1,6 +1,503 @@
-.auth-wrapper { display:flex; align-items:center; justify-content:center; min-height: calc(100vh - 72px); padding: 24px; background: var(--background); }
-.auth-card { width: 100%; max-width: 440px; padding: 24px; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow), var(--inset-shadow); }
-.form-title { margin-bottom: 12px; font-size: 24px; font-weight: 700; color: var(--text-primary); }
-.form { display:flex; flex-direction:column; gap: 16px; }
-.form .btn { width: 100%; padding: 12px; }
-.error { color: var(--danger); font-size: 14px; margin-top: 4px; }
+/* src/styles/forms.css */
+
+/* General Reset and Body */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background: #121212;
+  color: #f3f4f6;
+  overflow-x: hidden;
+}
+
+/* Auth Wrapper and Card */
+.auth-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 72px);
+  padding: 24px;
+  background: linear-gradient(135deg, #111827, #1f2937);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 760px; /* Increased for wider form */
+  padding: 32px; /* More padding for professionalism */
+  background: #1f1f1f;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.12), inset 0 -1px 3px rgba(255, 255, 255, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.auth-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+}
+
+/* Container and Panel (assuming .container is outer, .panel is similar to card) */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.panel {
+  background: #1f1f1f;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Form Elements */
+.form-title {
+  margin-bottom: 24px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #f3f4f6;
+  text-align: center;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #ccc;
+  margin-bottom: 8px;
+}
+
+.input, .select, .textarea-large {
+  background: #282828;
+  border: 1px solid #404040;
+  color: #f3f4f6;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus, .select:focus, .textarea-large:focus {
+  border-color: #38d39f;
+  box-shadow: 0 0 0 2px rgba(56, 211, 159, 0.2);
+  outline: none;
+}
+
+.textarea-large {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.file-input {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #38d39f;
+}
+
+.muted {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.error {
+  color: #ef4444;
+  font-size: 14px;
+  margin-top: 4px;
+  text-align: center;
+}
+
+/* Row and Col for Grid */
+.row {
+  display: flex;
+  gap: 16px;
+}
+
+.col {
+  flex: 1;
+}
+
+/* Buttons */
+.btn {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #38d39f, #2ab38a);
+  color: #fff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #2ab38a, #38d39f);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid #38d39f;
+  color: #38d39f;
+}
+
+.btn-outline:hover {
+  background: rgba(56, 211, 159, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Chip Input Styles - Dark Mode Adapted */
+.chip-input {
+  background: #282828;
+  border: 1px solid #404040;
+  padding: 8px;
+  border-radius: 8px;
+  min-height: 48px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  position: relative;
+  transition: border-color 0.2s ease;
+}
+
+.chip-input:focus-within {
+  border-color: #38d39f;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  background: #404040;
+  color: #f3f4f6;
+  border-radius: 16px;
+  padding: 6px 12px;
+  margin: 4px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.chip button {
+  margin-left: 8px;
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.chip button:hover {
+  color: #ef4444;
+}
+
+.chip-input input {
+  background: none;
+  border: none;
+  outline: none;
+  flex: 1;
+  min-width: 200px;
+  color: #f3f4f6;
+  font-size: 16px;
+  padding: 8px;
+}
+
+.suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #1f1f1f;
+  border: 1px solid #404040;
+  border-radius: 8px;
+  list-style: none;
+  padding: 8px 0;
+  margin: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.suggestions li {
+  padding: 12px 16px;
+  cursor: pointer;
+  color: #f3f4f6;
+  font-size: 14px;
+}
+
+.suggestions li:hover {
+  background: #282828;
+}
+
+/* src/styles/forms.css - Add these for modal */
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #1f1f1f;
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.ai-preview {
+  background: #282828;
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+.ai-preview p {
+  margin: 8px 0;
+}
+
+.mb-3 {
+  margin-bottom: 16px;
+}
+
+.mt-2 {
+  margin-top: 8px;
+}
+
+/* =========================
+   ADDITIVE STYLES FOR COURSES
+   (Do NOT remove or alter existing rules above)
+   ========================= */
+
+/* Widened modal variant (AI & course previews) */
+.modal-content--wide {
+  max-width: 860px;
+}
+
+/* Section title bar (used in course pages too) */
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+/* Utility badges reused in catalog cards */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #202020;
+  color: #e5e7eb;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.badge-info {
+  background: #0ea5e9;
+  color: #0b1220;
+}
+
+/* Compact ghost button used with chips (non-destructive) */
+.btn-ghost {
+  background: transparent;
+  color: #cbd5e1;
+  border: 1px dashed #3a3a3a;
+}
+.btn-ghost:hover {
+  background: rgba(255,255,255,0.04);
+}
+
+/* Narrow container helper for focused forms (create course) */
+.container.narrow {
+  max-width: 860px;
+}
+
+/* ===== Course Grid & Cards (reuse vibe of your job cards) ===== */
+.course-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 1100px) {
+  .course-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 780px) {
+  .course-grid { grid-template-columns: 1fr; }
+}
+
+.course-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: linear-gradient(180deg, #151515, #1f1f1f);
+  border: 1px solid #2f2f2f;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25), inset 0 -1px 3px rgba(255,255,255,0.04);
+  transition: transform .18s ease, box-shadow .25s ease, border-color .2s ease;
+}
+.course-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 30px rgba(0,0,0,0.35);
+  border-color: #3b3b3b;
+}
+
+/* Thumbnail */
+.course-thumb {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: #0a0a0a;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  margin-bottom: 10px;
+}
+
+/* Title & meta */
+.course-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #f3f4f6;
+  margin: 2px 0 6px;
+  letter-spacing: .2px;
+}
+.course-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+}
+.pill {
+  background: #242424;
+  color: #e5e7eb;
+  border: 1px solid #2f2f2f;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Lock indicator for lessons */
+.locked {
+  opacity: 0.8;
+  filter: grayscale(0.2);
+}
+
+/* Purchase / actions group */
+.purchase-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ===== Curriculum (Course Details & Player sidebar) ===== */
+.curriculum {
+  display: grid;
+  gap: 8px;
+}
+.lesson {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  background: #181818;
+  border: 1px solid #2a2a2a;
+  color: #e2e8f0;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+.lesson .left {
+  display: grid;
+  gap: 2px;
+}
+.lesson-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f3f4f6;
+}
+.lesson-sub {
+  font-size: 12px;
+  color: #9ca3af;
+}
+.lesson .right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lesson .play {
+  border: 1px solid #2f2f2f;
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: #232323;
+  color: #e5e7eb;
+}
+.lesson .play:hover {
+  background: #2a2a2a;
+}
+
+/* ===== Video Wrapper (Player) ===== */
+.video-wrapper {
+  background: #000;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.video-title {
+  font-weight: 800;
+  margin: 10px 0 6px;
+}
+.video-note {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+/* ===== Tiny helpers used in pages ===== */
+.inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.sep {
+  height: 1px;
+  background: #2a2a2a;
+  margin: 10px 0;
+}

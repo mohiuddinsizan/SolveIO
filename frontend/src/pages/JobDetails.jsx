@@ -1,3 +1,4 @@
+// frontend/src/pages/JobDetails.jsx
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import api from "../lib/api";
@@ -34,14 +35,18 @@ export default function JobDetails() {
   const [note, setNote] = useState("");
   const [url, setUrl] = useState("");
 
-  // Ratings
+  // Ratings (worker -> employer)
   const [rateScore, setRateScore] = useState(5);
   const [rateComment, setRateComment] = useState("");
 
-  // Employer approval inputs
+  // Employer approval inputs + optional rating at approval
   const [empScore, setEmpScore] = useState(5);
   const [empComment, setEmpComment] = useState("");
   const [tip, setTip] = useState("");
+
+  // Employer late rating (after completion if missed at approval)
+  const [lateEmpScore, setLateEmpScore] = useState(5);
+  const [lateEmpComment, setLateEmpComment] = useState("");
 
   // Chat
   const [messages, setMessages] = useState([]);
@@ -66,27 +71,8 @@ export default function JobDetails() {
     return job.status !== "open"; // assigned / awaiting-approval / completed
   }, [job, isEmployerOwner, isAssignedWorker]);
 
-  // try to derive display names (if backend didn’t populate, we still show role labels)
   const employerName = job?.employerName || job?.employer?.name || "Employer";
   const workerName = job?.workerName || job?.freelancer?.name || "Freelancer";
-  const meName = (isEmployerOwner ? employerName : isAssignedWorker ? workerName : user?.name) || "You";
-
-  const labelForSender = (from) => {
-    const f = sid(idOf(from));
-    if (!f) return { who: "Unknown", role: "unknown", name: "Unknown", them: true };
-
-    if (f === myId) {
-      return { who: "You", role: user?.role || "me", name: meName, them: false };
-    }
-    if (f === jobEmployerId) {
-      return { who: employerName, role: "employer", name: employerName, them: true };
-    }
-    if (f === jobWorkerId) {
-      return { who: workerName, role: "freelancer", name: workerName, them: true };
-    }
-    // fallback
-    return { who: "Participant", role: "participant", name: "Participant", them: true };
-  };
 
   const loadChat = async () => {
     try {
@@ -169,14 +155,17 @@ export default function JobDetails() {
     }
   };
 
+  // Employer confirm + (optional) inline rating
   const approveWithFeedback = async () => {
     const ok = window.confirm(
       "Confirm completion? 95% will be released to the freelancer immediately; 5% kept by company."
     );
     if (!ok) return;
     try {
-      await api.post(`/jobs/${id}/approve`);
-      if (empScore) await api.post(`/jobs/${id}/rate`, { score: Number(empScore), comment: empComment });
+      await api.post(`/jobs/${id}/approve`, {
+        score: Number(empScore),
+        comment: empComment,
+      });
       if (Number(tip) > 0) await api.post(`/jobs/${id}/tip`, { amount: Number(tip) });
       await load();
       alert("Approved. Escrow released and feedback recorded.");
@@ -185,6 +174,7 @@ export default function JobDetails() {
     }
   };
 
+  // Worker -> Employer rating after completion
   const rate = async () => {
     try {
       await api.post(`/jobs/${id}/rate`, { score: Number(rateScore), comment: rateComment });
@@ -195,14 +185,14 @@ export default function JobDetails() {
     }
   };
 
-  const sendChat = async () => {
-    if (!chatText.trim()) return;
+  // Employer late rating (if missed at approval)
+  const employerLateRate = async () => {
     try {
-      await api.post(`/jobs/${id}/messages`, { text: chatText });
-      setChatText("");
-      await loadChat();
+      await api.post(`/jobs/${id}/rate`, { score: Number(lateEmpScore), comment: lateEmpComment });
+      await load();
+      alert("Rating saved.");
     } catch (e) {
-      alert(e?.response?.data?.error || "Failed to send");
+      alert(e?.response?.data?.error || "Failed to rate");
     }
   };
 
@@ -210,12 +200,17 @@ export default function JobDetails() {
   if (!job) return <div className="container">Not found</div>;
 
   const escrowStatus = job.escrowStatus || escrow?.status || "unfunded";
+  const displayLabel = job.acceptedPrice ? "Agreed Amount" : "Budget";
+  const displayAmount = job.acceptedPrice || job.budget;
+
+  const hasEmployerReview = !!job.employerReview;   // employer -> freelancer
+  const hasFreelancerReview = !!job.freelancerReview; // freelancer -> employer
 
   return (
     <div className="container detail-wrap">
       <div className="detail-header">
         <div className="detail-title">{job.title}</div>
-        <span className="badge">Budget: ${job.budget}</span>
+        <span className="badge">{displayLabel}: ${displayAmount}</span>
       </div>
 
       <div className="detail-body">
@@ -237,10 +232,82 @@ export default function JobDetails() {
             </div>
           </div>
 
+          {/* ---------- Attachments ---------- */}
+          {Array.isArray(job.attachments) && job.attachments.length > 0 && (
+            <div className="mt-3">
+              <b>Attachments</b>
+              <div className="job-meta mt-1" style={{ gap: 12 }}>
+                {job.attachments.map((f, idx) => {
+                  const isImg = /^image\//i.test(f.mime || "");
+                  return (
+                    <a
+                      key={idx}
+                      href={f.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      title={`${f.name} (${f.mime || "file"})`}
+                      style={{ textDecoration: "none" }}
+                    >
+                      {isImg ? (
+                        <img
+                          src={f.url}
+                          alt={f.name}
+                          style={{
+                            width: 96,
+                            height: 72,
+                            objectFit: "cover",
+                            borderRadius: 8,
+                            border: "1px solid #233047",
+                          }}
+                        />
+                      ) : (
+                        <span className="job-tag">{f.name || "attachment"}</span>
+                      )}
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="mt-3">
             <b>Status:</b> <span className="badge">{job.status}</span>
           </div>
 
+          {/* ---------- Reviews (BOTH SIDES) ---------- */}
+          {(job.employerReview || job.freelancerReview) && (
+            <div className="mt-3">
+              <b>Reviews</b>
+
+              {job.employerReview && (
+                <div className="panel mt-2">
+                  <div><b>Employer → Freelancer</b> <span className="muted">({workerName})</span></div>
+                  <div className="mt-1">Rating: <strong>{job.employerReview.rating}</strong>/5</div>
+                  {job.employerReview.comment && (
+                    <div className="mt-1" style={{ whiteSpace: "pre-wrap" }}>{job.employerReview.comment}</div>
+                  )}
+                  <div className="muted mt-1">
+                    {new Date(job.employerReview.createdAt).toLocaleString()}
+                  </div>
+                </div>
+              )}
+
+              {job.freelancerReview && (
+                <div className="panel mt-2">
+                  <div><b>Freelancer → Employer</b> <span className="muted">({employerName})</span></div>
+                  <div className="mt-1">Rating: <strong>{job.freelancerReview.rating}</strong>/5</div>
+                  {job.freelancerReview.comment && (
+                    <div className="mt-1" style={{ whiteSpace: "pre-wrap" }}>{job.freelancerReview.comment}</div>
+                  )}
+                  <div className="muted mt-1">
+                    {new Date(job.freelancerReview.createdAt).toLocaleString()}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ---------- Escrow / Actions ---------- */}
           <div className="mt-3 escrow-box">
             <div><b>Escrow:</b> <span className="escrow-status">{escrowStatus}</span></div>
 
@@ -349,58 +416,51 @@ export default function JobDetails() {
             </div>
           )}
 
-          {/* ==== CHAT – now clearly shows who sent what ==== */}
-{/* ==== CHAT ==== */}
-{canSeeChat && (
-  <div className="panel mt-3" id="chat">
-    <b>Order Chat</b>
-    <div className="chat mt-2">
-      <div className="chat-box">
-        {messages.map(m => {
-          // Normalize IDs: handle strings or populated objects
-          const myId =
-            String(user?.id || user?._id || "");
-          const fromId =
-            String(
-              (m?.from && (m.from._id || m.from.id || m.from)) ||
-              (m?.sender && (m.sender._id || m.sender.id || m.sender)) ||
-              (m?.senderId) ||
-              ""
-            );
+          {/* Chat */}
+          {canSeeChat && (
+            <div className="panel mt-3" id="chat">
+              <b>Order Chat</b>
+              <div className="chat mt-2">
+                <div className="chat-box">
+                  {messages.map(m => {
+                    const myId = String(user?.id || user?._id || "");
+                    const fromId = String(
+                      (m?.from && (m.from._id || m.from.id || m.from)) ||
+                      (m?.sender && (m.sender._id || m.sender.id || m.sender)) ||
+                      (m?.senderId) ||
+                      ""
+                    );
+                    const mine = myId && fromId && myId === fromId;
+                    return (
+                      <div key={m._id || `${fromId}-${m.createdAt}`} className={`msg-row ${mine ? "me" : "them"}`}>
+                        <div className="msg-bubble">
+                          <div className="msg-text">{m.text}</div>
+                          <div className="msg-time">{new Date(m.createdAt).toLocaleString()}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {messages.length === 0 && <div className="muted">No messages yet.</div>}
+                </div>
 
-        // If either side missing, default to "them" to be safe
-          const mine = myId && fromId && myId === fromId;
-
-          return (
-            <div key={m._id || `${fromId}-${m.createdAt}`} className={`msg-row ${mine ? "me" : "them"}`}>
-              <div className="msg-bubble">
-                <div className="msg-text">{m.text}</div>
-                <div className="msg-time">{new Date(m.createdAt).toLocaleString()}</div>
+                <div className="chat-row">
+                  <input
+                    className="input"
+                    placeholder="Type a message…"
+                    value={chatText}
+                    onChange={e => setChatText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); (async()=>{ await api.post(`/jobs/${id}/messages`, { text: chatText }); setChatText(""); await loadChat(); })(); }
+                    }}
+                  />
+                  <button className="btn btn-primary" onClick={async()=>{ await api.post(`/jobs/${id}/messages`, { text: chatText }); setChatText(""); await loadChat(); }}>Send</button>
+                </div>
               </div>
             </div>
-          );
-        })}
-        {messages.length === 0 && <div className="muted">No messages yet.</div>}
-      </div>
+          )}
 
-      <div className="chat-row">
-        <input
-          className="input"
-          placeholder="Type a message…"
-          value={chatText}
-          onChange={e => setChatText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); }
-          }}
-        />
-        <button className="btn btn-primary" onClick={sendChat}>Send</button>
-      </div>
-    </div>
-  </div>
-)}
-
-
-          {user?.role === "worker" && job.status === "completed" && (
+          {/* Rating forms guarded to avoid duplicates */}
+          {user?.role === "worker" && job.status === "completed" && !hasFreelancerReview && (
             <div className="panel mt-3">
               <b>Rate the Employer</b>
               <div className="app-form mt-2">
@@ -409,6 +469,19 @@ export default function JobDetails() {
                 </select>
                 <textarea className="input" rows={3} placeholder="Comment" value={rateComment} onChange={e => setRateComment(e.target.value)} />
                 <button className="btn btn-primary" onClick={rate}>Submit Rating</button>
+              </div>
+            </div>
+          )}
+
+          {isEmployerOwner && job.status === "completed" && !hasEmployerReview && (
+            <div className="panel mt-3">
+              <b>Rate the Freelancer</b>
+              <div className="app-form mt-2">
+                <select className="select" value={lateEmpScore} onChange={e => setLateEmpScore(Number(e.target.value))}>
+                  {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+                <textarea className="input" rows={3} placeholder="Comment" value={lateEmpComment} onChange={e => setLateEmpComment(e.target.value)} />
+                <button className="btn btn-primary" onClick={employerLateRate}>Submit Rating</button>
               </div>
             </div>
           )}

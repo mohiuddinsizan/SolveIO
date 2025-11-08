@@ -1,0 +1,118 @@
+/* Container aligns with your site max width */
+.sd-container {
+  max-width: var(--container, 1200px);
+  margin: 0 auto;
+  padding: 16px 24px;
+}
+
+/* Header */
+.sd-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.sd-header-actions { display: flex; gap: 8px; }
+
+/* KPIs */
+.sd-kpi { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin: 12px 0; }
+@media (max-width: 900px) { .sd-kpi { grid-template-columns: 1fr; } }
+
+.sd-kpi-card {
+  background: var(--panel-2, #0f172a);
+  border: 1px solid var(--border, #223047);
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: var(--shadow-sm, 0 10px 24px rgba(0,0,0,.25));
+}
+.sd-kpi-label { color: var(--text-dim, #a7b4c7); font-size: 12px; margin-bottom: 4px; }
+.sd-kpi-value { font-size: 26px; font-weight: 900; letter-spacing: .2px; }
+.sd-kpi-value.good { color: #22c55e; }
+.sd-kpi-value.bad  { color: #ef4444; }
+
+/* Grid */
+.sd-grid { display: grid; grid-template-columns: 1.25fr .8fr; gap: 16px; }
+@media (max-width: 1100px) { .sd-grid { grid-template-columns: 1fr; } }
+
+/* Panels (reuse your tokens) */
+.panel {
+  background: var(--panel-2, #0f172a);
+  border: 1px solid var(--border, #223047);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow-sm, 0 10px 24px rgba(0,0,0,.25));
+}
+.sd-panel-title { font-weight: 900; letter-spacing: .2px; margin-bottom: 8px; }
+.sd-panel-title-row { display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px; }
+.sd-hint { font-size: 12px; }
+
+/* Charts — FIXED HEIGHT to prevent -1 width/height bug */
+.sd-chart { width: 100%; height: 280px; }
+.sd-chart > div { width: 100%; height: 100%; }
+
+/* Empty state */
+.sd-empty { padding: 12px; }
+
+/* Feedback feed */
+.sd-feed { display: grid; gap: 10px; }
+.sd-feed-item {
+  border: 1px solid var(--border, #223047);
+  border-radius: 10px;
+  background: #121c2e;
+  padding: 10px;
+}
+.sd-feed-top { display:flex; align-items:center; justify-content:space-between; gap: 8px; margin-bottom: 4px; }
+.sd-feed-job { font-weight: 800; }
+.sd-feed-date { color: var(--text-dim, #a7b4c7); font-size: 12px; }
+.sd-feed-text { white-space: pre-wrap; line-height: 1.55; }
+
+/* Summary & skills */
+.sd-summary { white-space: pre-wrap; line-height: 1.6; }
+.sd-chip-wrap { gap: 8px; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border, #223047);
+  background: #101a2b;
+  color: var(--text, #e5edf7);
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.sd-skill-notes { display: grid; gap: 6px; margin-top: 10px; }
+
+/* Courses */
+.sd-courses { display: grid; gap: 12px; }
+.sd-course-card {
+  display: grid; grid-template-columns: 120px 1fr; gap: 12px;
+  text-decoration: none; color: inherit;
+  border: 1px solid var(--border, #223047);
+  border-radius: 12px;
+  background: #121c2e;
+  padding: 10px;
+  transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.sd-course-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0,0,0,.35);
+  border-color: color-mix(in srgb, var(--ring, #38d39f) 24%, var(--border, #223047));
+}
+.sd-course-thumb { border-radius: 10px; overflow: hidden; background: #0a0f1a; display: grid; place-items: center; }
+.sd-course-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.sd-course-placeholder { color: var(--text-dim, #a7b4c7); font-size: 13px; }
+.sd-course-meta { display: grid; gap: 6px; }
+.sd-course-title { font-weight: 900; letter-spacing: .2px; }
+.sd-course-sub { display:flex; align-items:center; gap: 8px; flex-wrap: wrap; }
+.sd-course-price { font-size: 12.5px; color: #a7b4c7; }
+.sd-course-reason { font-size: 12.5px; color: #a7b4c7; }
+
+/* Columns */
+.sd-left { display: grid; gap: 16px; }
+.sd-right { display: grid; gap: 16px; }

@@ -1,37 +1,508 @@
+/* src/styles/jobs.css */
 @import "./variables.css";
 
-.toolbar {
-  display:flex; gap: 12px; align-items:center; margin-bottom: 16px;
+/* ---------- Color & layout tokens ---------- */
+:root {
+  --bg: #0b1220;
+  --panel: #0f172a;
+  --panel-2: #111827;
+  --panel-3: #1f2937;
+  --surface: #0e1525;
+  --border: #233047;
+  --ring: #38d39f;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --tag: #182033;
+  --shadow-lg: 0 16px 38px rgba(0,0,0,0.35);
+  --shadow: 0 10px 25px rgba(0,0,0,0.25);
+  --shadow-sm: 0 6px 14px rgba(0,0,0,0.2);
+  --inset: inset 0 1px 0 rgba(255,255,255,0.06);
+  --radius: 12px;
+  --radius-sm: 8px;
 }
-.toolbar .input { max-width: 280px; }
-.toolbar .tags { flex: 1; }
 
-.job-list { display:grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-@media (max-width: 1000px){ .job-list { grid-template-columns: 1fr; } }
+/* ---------- Page container helpers ---------- */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+}
 
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 8px 0 16px;
+}
+
+.h2 {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+/* ---------- Toolbar (polished + wraps) ---------- */
+.toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, var(--panel), var(--panel-3));
+  padding: 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm), var(--inset);
+}
+
+/* Pro version with better wrapping & alignment */
+.pro-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.pro-toolbar--wrap {
+  flex-wrap: wrap;              /* ✅ allow toolbar to wrap to multiple rows */
+  align-items: flex-start;      /* ✅ avoid vertical clipping of chips */
+}
+
+/* Left side can also wrap so chips move to a new line */
+.toolbar-left {
+  display: flex;
+  flex: 1;
+  gap: 12px;
+  align-items: stretch;
+  flex-wrap: wrap;              /* ✅ chips won't be cut off */
+  align-content: flex-start;    /* ✅ place multiple rows neatly */
+}
+
+/* Search */
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.search-box .input {
+  width: 260px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  transition: box-shadow .2s ease, border-color .2s ease, transform .05s ease;
+}
+.search-box .input:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 30%, transparent);
+}
+.icon-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.icon-btn:hover { background: #141c2e; color: #e5e7eb; }
+
+/* Tag filter box (grows & wraps) */
+.filter-chipbox {
+  flex: 1 1 420px;              /* ✅ takes available space, can drop to next line */
+  min-width: 280px;             /* ✅ never collapses too narrow */
+}
+.input-chip {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.input-chip:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 28%, transparent);
+}
+
+/* Tag chips row (multi-line, no clipping) */
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;              /* ✅ break into multiple rows */
+  gap: 6px;
+  margin-top: 6px;
+  max-height: none;             /* ✅ ensure not constrained */
+  overflow: visible;            /* ✅ avoid cutting off dropdowns/chips */
+}
+
+/* Min budget / rating group */
+.min-budget {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.min-label { color: var(--text-dim); font-size: 13px; }
+.min-budget .input {
+  width: 120px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+/* Right side actions */
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Buttons & badges */
+.btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel-3);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform .08s ease, box-shadow .2s ease, background .2s ease;
+}
+.btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.btn:active { transform: translateY(0); box-shadow: none; }
+.btn-primary {
+  background: linear-gradient(135deg, #38d39f, #2ab38a);
+  border-color: #2ab38a;
+  color: #0b1220;
+}
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--ring);
+  color: var(--ring);
+}
+.btn-ghost {
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--text-dim);
+}
+.btn-ghost:hover {
+  border-style: solid;
+  color: var(--text);
+}
+
+.badge {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.badge-info {
+  background: #0ea5e9;
+  color: #0b1220;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+/* ---------- Generic inputs ---------- */
+.input, .select, textarea.input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.input:focus, .select:focus, textarea.input:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 28%, transparent);
+  outline: none;
+}
+
+.error { color: #ef4444; text-align: center; margin: 8px 0; }
+.muted { color: var(--text-dim); }
+
+/* ---------- Job list grid ---------- */
+.job-list {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 1200px) {
+  .job-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 880px) {
+  .job-list { grid-template-columns: 1fr; }
+}
+
+/* ---------- Job cards ---------- */
 .job-card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)) , var(--surface);
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  background: linear-gradient(180deg, var(--panel), var(--panel-3));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow-sm), var(--inset);
+  transition: transform .18s ease, box-shadow .25s ease, border-color .2s ease;
+  will-change: transform, box-shadow;
+}
+.job-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+  border-color: color-mix(in srgb, var(--ring) 25%, var(--border));
+}
+
+/* ---------- Job content ---------- */
+.job-title {
+  font-weight: 800;
+  font-size: 20px;
+  margin-bottom: 6px;
+  color: var(--text);
+  letter-spacing: .2px;
+}
+.job-desc {
+  color: var(--text-dim);
+  font-size: 15px;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+.job-employer {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.employer-name { color: var(--text); font-weight: 700; }
+.employer-rating {
+  background: var(--surface);
+  color: var(--text);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+}
+
+.job-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.job-tag {
+  background: var(--tag);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  transition: background .2s ease, box-shadow .2s ease, transform .05s ease;
+  box-shadow: inset 0 -1px 3px rgba(255,255,255,0.04);
+  user-select: none;
+}
+.job-tag:hover { background: #213053; transform: translateY(-1px); }
+/* ghost chip for skills vs tags */
+.job-tag.ghost { opacity: 0.85; border-style: dashed; }
+
+/* ---------- Detail layout (JobDetails page) ---------- */
+.detail-wrap { max-width: 980px; margin: 0 auto; }
+.detail-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.detail-title {
+  font-size: 28px; font-weight: 800; color: var(--text); letter-spacing: .2px;
+}
+.detail-body {
+  display: grid; gap: 16px; grid-template-columns: 2fr 1fr;
+}
+@media (max-width: 1100px) { .detail-body { grid-template-columns: 1fr; } }
+.sidebar { position: sticky; top: 84px; }
+
+/* ---------- Panels & cards ---------- */
+.panel, .card {
+  background: var(--panel-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
-  box-shadow: var(--shadow-3d);
-  transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease;
+  box-shadow: var(--shadow-sm), inset 0 -1px 2px rgba(255,255,255,0.03);
 }
-.job-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-3d-hover); border-color: #32405a; }
+.card b, .panel b { color: var(--text); }
 
-.job-title { font-weight: 700; font-size: 18px; margin-bottom: 6px; }
-.job-desc { color: var(--text-dim); font-size: 14px; margin-bottom: 10px; }
-.job-meta { display:flex; gap: 8px; align-items:center; flex-wrap:wrap; }
-.job-tag { background:#182338; color:#9fb6df; border:1px solid #2b3a52; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+/* ---------- Apply/Forms ---------- */
+.app-form { display: flex; flex-direction: column; gap: 10px; }
 
-.detail-wrap { max-width: 900px; margin: 0 auto; }
-.detail-header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 12px; }
-.detail-title { font-size: 26px; font-weight: 700; }
-.detail-body { display:grid; gap:16px; grid-template-columns: 2fr 1fr; }
-@media (max-width: 1000px){ .detail-body { grid-template-columns: 1fr; } }
-.sidebar { position: sticky; top: 84px; }
+/* ---------- Applicants ---------- */
+.app-item {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  box-shadow: inset 0 -1px 3px rgba(255,255,255,0.05);
+}
+.app-header { display: flex; align-items: center; justify-content: space-between; }
+.app-row { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--text-dim); }
 
-.app-form { display:flex; flex-direction:column; gap: 10px; }
-.app-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
-.app-header { display:flex; align-items:center; justify-content:space-between; }
-.app-row { display:flex; gap:8px; align-items:center; font-size:14px; color: var(--text-dim); }
+/* ---------- Escrow Box ---------- */
+.escrow-box {
+  padding: 18px; border: 1px dashed #2a3447; border-radius: var(--radius);
+  background: #0f1420;
+}
+.escrow-status { font-weight: 800; }
+
+/* ---------- Chat (base coordinates; bubbles in orders.css) ---------- */
+.chat-row { display: flex; gap: 8px; }
+
+/* ---------- Modal polish (AI search helper) ---------- */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: var(--panel-2);
+  padding: 24px;
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 600px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+.modal-content.modal-content--wide { max-width: 720px; }
+
+/* ---------- Responsive tweaks ---------- */
+@media (max-width: 860px) {
+  .search-box .input { width: 100%; }
+  .min-budget { width: 100%; }
+  .toolbar-right { width: 100%; justify-content: flex-end; }
+}
+
+/* highlight for matched text */
+.hl {
+  background: rgba(56, 211, 159, 0.22);
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+/* dropdown for chip suggestions */
+.dropdown { position: relative; }
+.dropdown-list {
+  position: absolute; left: 0; right: 0; top: 0;
+  z-index: 30; list-style: none; margin: 0; padding: 6px;
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 10px; box-shadow: var(--shadow-sm);
+  max-height: 240px; overflow-y: auto;
+}
+.dropdown-item {
+  padding: 8px 10px; border-radius: 8px; cursor: pointer; color: var(--text);
+}
+.dropdown-item:hover { background: #141c2e; }
+
+
+/* ---------- Marketplace toolbar alignment fixes ---------- */
+.pro-toolbar {
+  display: flex;
+  flex-wrap: wrap;                 /* allow wrapping without overlap */
+  gap: 12px;
+  align-items: flex-start;         /* align top so rows don't yank each other */
+}
+
+.pro-toolbar .toolbar-left,
+.pro-toolbar .toolbar-right {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;                 /* chips can grow without pushing controls off */
+}
+
+/* unify control heights so inputs/selects/buttons align perfectly */
+:root {
+  --control-h: 40px;               /* tweak if your theme uses another size */
+  --control-px: 12px;
+}
+
+.pro-toolbar .input,
+.pro-toolbar select.input,
+.pro-toolbar .btn,
+.pro-toolbar .btn-outline,
+.pro-toolbar .btn-ghost,
+.pro-toolbar .btn-primary {
+  height: var(--control-h);
+  line-height: calc(var(--control-h) - 2px);
+  padding: 0 var(--control-px);
+  display: inline-flex;
+  align-items: center;
+}
+
+/* search box should not shrink when chip section wraps */
+.pro-toolbar .search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 260px;
+  flex: 1 1 260px;   /* grows but keeps minimum size */
+}
+
+/* tag filter block: input/logic row + chips container */
+.filter-chipbox {
+  display: grid;
+  gap: 8px;
+  min-width: 320px;
+  flex: 2 1 420px;   /* prefers to be wider; shrinks gracefully */
+}
+
+/* the row with input + AND/OR + buttons */
+.filter-chipbox .chip-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+/* AND/OR select is same height as other controls */
+.filter-chipbox .tag-logic {
+  width: 96px;
+}
+
+/* chips wrap nicely without stretching the whole toolbar */
+.filter-chipbox .chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  max-height: none;         /* let it grow */
+}
+
+/* reserve a small base height so the row doesn't "jump" when first chip is added */
+.filter-chipbox .chip-row:empty::after {
+  content: "";
+  display: block;
+  height: 0.01px;
+}
+
+/* ensure right side buttons don’t move when AI badge appears */
+.pro-toolbar .toolbar-right {
+  margin-left: auto;
+  min-height: var(--control-h);    /* keeps the row height steady */
+}
+
+/* small screens: make blocks stack predictably */
+@media (max-width: 980px) {
+  .pro-toolbar .toolbar-left,
+  .pro-toolbar .toolbar-right {
+    width: 100%;
+  }
+  .filter-chipbox { flex: 1 1 100%; }
+  .pro-toolbar .search-box { flex: 1 1 100%; }
+}

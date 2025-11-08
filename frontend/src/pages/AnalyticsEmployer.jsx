@@ -1,3 +1,4 @@
+// frontend/src/pages/AnalyticsEmployer.jsx
 import { useEffect, useState } from "react";
 import api from "../lib/api";
 import {
@@ -39,9 +40,9 @@ export default function AnalyticsEmployer() {
   ];
 
   const pieData = [
-    { name: "Open",        value: stats.open },
+    { name: "Open", value: stats.open },
     { name: "In Progress", value: stats.inProgress },
-    { name: "Completed",   value: stats.completed },
+    { name: "Completed", value: stats.completed },
   ];
 
   // Simple bar data using the same counts (works even if you add timeseries later)

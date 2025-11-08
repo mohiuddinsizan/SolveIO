@@ -1,3 +1,4 @@
+// frontend/src/pages/AnalyticsFreelancer.jsx
 import { useEffect, useMemo, useState } from "react";
 import api from "../lib/api";
 import Stars from "../components/Stars";

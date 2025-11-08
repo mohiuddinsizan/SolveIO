@@ -7,78 +7,198 @@ import User from "../models/User.js";
 import { releaseEscrow } from "./escrow.controller.js";
 import { ALLOWED_SKILLS, ALLOWED_TAGS } from "../constants/meta.js";
 
+/* --------------------------- helpers --------------------------- */
+function parseArrayMaybe(val) {
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    const s = val.trim();
+    if (s.startsWith("[") && s.endsWith("]")) {
+      try {
+        const arr = JSON.parse(s);
+        return Array.isArray(arr) ? arr : [];
+      } catch {}
+    }
+    return s.split(",").map((x) => x.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+function normalizeLowerDedupe(list) {
+  const out = [];
+  const seen = new Set();
+  for (const v of list || []) {
+    const s = String(v || "").trim().toLowerCase();
+    if (s && !seen.has(s)) { seen.add(s); out.push(s); }
+  }
+  return out;
+}
+
+async function bumpUserRating(userId, rating) {
+  if (!userId || !Number.isFinite(Number(rating))) return;
+  const u = await User.findById(userId);
+  if (!u) return;
+  const prevCount = Number(u.ratingCount || 0);
+  const prevAvg = Number(u.ratingAvg || 0);
+  const nextCount = prevCount + 1;
+  const nextAvg = ((prevAvg * prevCount) + Number(rating)) / nextCount;
+  u.ratingCount = nextCount;
+  u.ratingAvg = Number(nextAvg.toFixed(2));
+  await u.save();
+}
 
 /** Create a new job (employer only) */
 export const createJob = async (req, res) => {
   try {
-    const employerId = req.user.sub;
-    let { title, description, requiredSkills = [], tags = [], budget } = req.body;
+    const employerId = req.user?.sub;
+    if (!employerId) return res.status(401).json({ error: "Not authenticated" });
 
-    if (!title || !budget) return res.status(400).json({ error: "Missing fields" });
+    const title = String(req.body?.title || "").trim();
+    const description = String(req.body?.description || "");
+    const budget = Number(req.body?.budget);
 
-    requiredSkills = (requiredSkills || []).map(s => String(s).trim().toLowerCase()).filter(Boolean);
-    tags = (tags || []).map(t => String(t).trim().toLowerCase()).filter(Boolean);
+    if (!title) return res.status(400).json({ error: "Title required" });
+    if (!Number.isFinite(budget) || budget <= 0) {
+      return res.status(400).json({ error: "Budget must be a positive number" });
+    }
 
-    const badSkills = requiredSkills.filter(s => !ALLOWED_SKILLS.includes(s));
-    const badTags = tags.filter(t => !ALLOWED_TAGS.includes(t));
-    if (badSkills.length) return res.status(400).json({ error: `Invalid skills: ${badSkills.join(", ")}` });
-    if (badTags.length) return res.status(400).json({ error: `Invalid tags: ${badTags.join(", ")}` });
+    let requiredSkills = normalizeLowerDedupe(parseArrayMaybe(req.body?.requiredSkills));
+    let tags           = normalizeLowerDedupe(parseArrayMaybe(req.body?.tags));
+
+    const allowedSkills = Array.isArray(ALLOWED_SKILLS) ? ALLOWED_SKILLS.map(s => s.toLowerCase()) : [];
+    const allowedTags   = Array.isArray(ALLOWED_TAGS)   ? ALLOWED_TAGS.map(t => t.toLowerCase())   : [];
+
+    if (allowedSkills.length) requiredSkills = requiredSkills.filter((s) => allowedSkills.includes(s));
+    if (allowedTags.length)   tags           = tags.filter((t) => allowedTags.includes(t));
+
+    if (!requiredSkills.length) return res.status(400).json({ error: "At least one required skill is needed" });
+    if (!tags.length)          return res.status(400).json({ error: "At least one tag is needed" });
+
+    const attachments = (req.files || []).map((f) => ({
+      name: f.originalname || "file",
+      url:  f.path || f.secure_url || f.url || "",
+      mime: f.mimetype,
+      size: Number(f.size || 0),
+      publicId: f.filename,
+    }));
 
     const job = await Job.create({
-      employerId,
-      title,
-      description: description || "",
-      requiredSkills,
-      tags,
-      budget,              // employer's initial offer
-      agreedPrice: null,   // NEW: final negotiated price, set on assign
+      employerId, title, description, requiredSkills, tags,
+      attachments, budget, acceptedPrice: null,
     });
 
-    res.json(job);
+    return res.json(job);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("createJob error:", e);
+    if (e?.name === "ValidationError") {
+      const msgs = Object.values(e.errors || {}).map(err => err.message);
+      return res.status(400).json({ error: msgs.join("; ") || "ValidationError" });
+    }
+    return res.status(500).json({ error: e?.message || "Internal Server Error" });
   }
 };
 
 /** List open jobs with filters */
 export const listJobs = async (req, res) => {
   try {
-    const { q, tags, minBudget } = req.query;
-    const filter = { status: "open" };
+    const { q, tags, minBudget, minEmployerRating } = req.query;
+    let match = { status: "open" };
 
     if (q) {
-      filter.$or = [
-        { title: new RegExp(q, "i") },
-        { description: new RegExp(q, "i") },
+      match.$or = [
+        { title: { $regex: q, $options: "i" } },
+        { description: { $regex: q, $options: "i" } },
         { requiredSkills: { $in: [new RegExp(q, "i")] } },
         { tags: { $in: [new RegExp(q, "i")] } },
       ];
     }
 
-    if (tags) {
-      const list = String(tags)
-        .split(",")
-        .map(t => t.trim().toLowerCase())
-        .filter(Boolean);
-      if (list.length) filter.tags = { $all: list };
+    // Support tags as repeated params (?tags=a&tags=b) or comma string
+    let tagArray = [];
+    if (Array.isArray(tags)) {
+      tagArray = tags.flatMap((t) => String(t).split(",")).map((t) => t.trim().toLowerCase()).filter(Boolean);
+    } else if (typeof tags === "string") {
+      tagArray = String(tags).split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
     }
+    if (tagArray.length) match.tags = { $all: tagArray };
 
-    if (minBudget) filter.budget = { $gte: Number(minBudget) || 0 };
+    if (minBudget) match.budget = { $gte: Number(minBudget) || 0 };
 
-    const jobs = await Job.find(filter).sort({ createdAt: -1 }).limit(100).lean();
+    const pipeline = [
+      { $match: match },
+      {
+        $lookup: {
+          from: "users",
+          localField: "employerId",
+          foreignField: "_id",
+          as: "employer",
+          pipeline: [{ $project: { name: 1, ratingAvg: 1, ratingCount: 1 } }]
+        },
+      },
+      { $unwind: "$employer" },
+      // (Optional) filter by employer rating
+      ...(minEmployerRating
+        ? [{ $match: { "employer.ratingAvg": { $gte: parseFloat(minEmployerRating) || 0 } } }]
+        : []),
+      {
+        $project: {
+          _id: 1, title: 1, description: 1, requiredSkills: 1, tags: 1, attachments: 1,
+          budget: 1, status: 1, createdAt: 1, employer: 1,
+          // NEW: flat mirrors for convenience in UIs
+          employerName: "$employer.name",
+          employerRatingAvg: "$employer.ratingAvg",
+          employerRatingCount: "$employer.ratingCount",
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      { $limit: 100 },
+    ];
+
+    const jobs = await Job.aggregate(pipeline);
     res.json(jobs);
   } catch (e) {
+    console.error("listJobs error:", e);
     res.status(500).json({ error: e.message });
   }
 };
 
-/** Get job by ID */
+/** Get job by ID (return reviews + parties) */
 export const getJob = async (req, res) => {
   try {
-    const job = await Job.findById(req.params.id).lean();
+    const job = await Job.findById(req.params.id)
+      .populate({ path: "employerId", select: "name ratingAvg ratingCount skills" })
+      .populate({ path: "assignedTo", select: "name ratingAvg ratingCount skills" })
+      .lean();
     if (!job) return res.status(404).json({ error: "Not found" });
-    res.json(job);
+
+    const shaped = {
+      ...job,
+      employer: job.employerId ? {
+        _id: job.employerId._id,
+        name: job.employerId.name,
+        ratingAvg: job.employerId.ratingAvg,
+        ratingCount: job.employerId.ratingCount,
+      } : null,
+      freelancer: job.assignedTo ? {
+        _id: job.assignedTo._id,
+        name: job.assignedTo.name,
+        ratingAvg: job.assignedTo.ratingAvg,
+        ratingCount: job.assignedTo.ratingCount,
+      } : null,
+      employerName: job.employerId?.name,
+      workerName: job.assignedTo?.name,
+
+      // expose persisted reviews
+      employerReview: job.employerReview || null,
+      freelancerReview: job.freelancerReview || null,
+
+      // legacy mirrors
+      ratingEmployerToFreelancer: job.ratingEmployerToFreelancer || null,
+      ratingFreelancerToEmployer: job.ratingFreelancerToEmployer || null,
+    };
+
+    res.json(shaped);
   } catch (e) {
+    console.error("getJob error:", e);
     res.status(500).json({ error: e.message });
   }
 };
@@ -89,7 +209,6 @@ export const applyJob = async (req, res) => {
     const freelancerId = req.user.sub;
     const jobId = req.params.id;
     const { proposal = "", askPrice } = req.body;
-
     if (!askPrice) return res.status(400).json({ error: "askPrice required" });
 
     const job = await Job.findById(jobId);
@@ -99,11 +218,12 @@ export const applyJob = async (req, res) => {
     res.json(app);
   } catch (e) {
     if (e.code === 11000) return res.status(409).json({ error: "Already applied" });
+    console.error("applyJob error:", e);
     res.status(500).json({ error: e.message });
   }
 };
 
-/** List applicants (employer only, must own the job) */
+/** List applicants (employer only) */
 export const listApplicants = async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -119,11 +239,10 @@ export const listApplicants = async (req, res) => {
 
     res.json(applicants);
   } catch (e) {
+    console.error("listApplicants error:", e);
     res.status(500).json({ error: e.message });
   }
 };
-
-// ...top of file unchanged
 
 /** Assign a freelancer (employer only) */
 export const assignJob = async (req, res) => {
@@ -141,7 +260,6 @@ export const assignJob = async (req, res) => {
       return res.status(400).json({ error: "Invalid application" });
     }
 
-    // reject others, accept this one
     await Application.updateMany(
       { jobId, _id: { $ne: app._id } },
       { $set: { status: "rejected", rejectMessage: "Sorry! Already found a freelancer" } }
@@ -149,23 +267,21 @@ export const assignJob = async (req, res) => {
     app.status = "accepted";
     await app.save();
 
-    // lock agreed amount (negotiated askPrice) onto the job
     job.status = "assigned";
     job.assignedTo = app.freelancerId;
-    job.agreedAmount = Number(app.askPrice); // <-- key line
+    job.acceptedPrice = Number(app.askPrice);
     job.freelancerConfirm = false;
     job.employerConfirm = false;
     job.escrowStatus = "unfunded";
     await job.save();
 
-    // create escrow shell (unfunded) using agreedAmount
     let es = await Escrow.findOne({ jobId: job._id });
     if (!es) {
       await Escrow.create({
         jobId: job._id,
         employerId: job.employerId,
         freelancerId: job.assignedTo,
-        amount: job.agreedAmount ?? job.budget,
+        amount: job.acceptedPrice ?? job.budget,
         status: "unfunded",
       });
     }
@@ -175,13 +291,13 @@ export const assignJob = async (req, res) => {
       jobId: job._id,
       assignedTo: job.assignedTo,
       escrowRequired: true,
-      agreedAmount: job.agreedAmount,
+      agreedAmount: job.acceptedPrice,
     });
   } catch (e) {
+    console.error("assignJob error:", e);
     res.status(500).json({ error: e.message });
   }
 };
-
 
 /** Escrow status (idempotent) */
 export const getEscrow = async (req, res) => {
@@ -196,11 +312,12 @@ export const getEscrow = async (req, res) => {
 
     res.json({ status, amount });
   } catch (e) {
+    console.error("getEscrow error:", e);
     res.status(500).json({ error: e.message });
   }
 };
 
-/** Fund escrow (employer only, idempotent) */
+/** Fund escrow (employer only) */
 export const fundEscrow = async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -215,7 +332,7 @@ export const fundEscrow = async (req, res) => {
     if (!es) return res.status(400).json({ error: "Escrow not initialized" });
 
     if (es.status === "funded" && job.escrowStatus === "funded") {
-      return res.json({ ok: true, status: "funded" }); // idempotent
+      return res.json({ ok: true, status: "funded" });
     }
 
     es.status = "funded";
@@ -224,14 +341,14 @@ export const fundEscrow = async (req, res) => {
     job.escrowStatus = "funded";
     await job.save();
 
-    // (Optional) move money to company—if you persist admin wallet, do it here
     return res.json({ ok: true, status: "funded" });
   } catch (e) {
+    console.error("fundEscrow error:", e);
     res.status(500).json({ error: e.message });
   }
 };
 
-/** Freelancer submits work (requires escrow funded) */
+/** Freelancer submits work */
 export const submitWork = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
@@ -252,35 +369,59 @@ export const submitWork = async (req, res) => {
     await job.save();
 
     res.json({ ok: true, job });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error("submitWork error:", e);
+    res.status(500).json({ error: e.message });
+  }
 };
 
-/** Employer approves (if freelancer submitted) → release escrow (95/5 split) */
-
+/** Employer approves → release escrow → complete (optional one-shot employer review) */
 export const approveWork = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
     if (!job) return res.status(404).json({ error: "Job not found" });
     if (String(job.employerId) !== req.user.sub) return res.status(403).json({ error: "Forbidden" });
-
     if (!job.freelancerConfirm) return res.status(400).json({ error: "Freelancer has not submitted yet" });
 
     job.employerConfirm = true;
     await job.save();
 
-    if (job.freelancerConfirm && job.employerConfirm) {
-      await releaseEscrow(job._id);
+    try { await releaseEscrow(job._id); } catch (e) { console.warn("releaseEscrow:", e?.message || e); }
+
+    job.status = "completed";
+    job.escrowStatus = "released";
+    job.approvedAt = new Date();
+    job.completedAt = new Date();
+
+    // Optional inline employer rating/comment with approval (immutable)
+    const rating = Number(req.body?.score);
+    const comment = String(req.body?.comment || "");
+    if (Number.isFinite(rating) && rating >= 1 && rating <= 5) {
+      if (job.employerReview) {
+        // already rated previously → ignore silently to keep idempotence
+      } else {
+        job.employerReview = { rating, comment, createdAt: new Date() };
+        job.ratingEmployerToFreelancer = { score: rating, comment, at: new Date() }; // mirror
+        await bumpUserRating(job.assignedTo, rating);
+      }
     }
 
+    await job.save();
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error("approveWork error:", e);
+    res.status(500).json({ error: e.message });
+  }
 };
 
-/** Ratings (post-completion, either side can rate the other) */
+/** Ratings (immutable once set) */
 export const rateJob = async (req, res) => {
   try {
-    const { score, comment = "" } = req.body;
-    if (!score || score < 1 || score > 5) return res.status(400).json({ error: "Score 1-5 required" });
+    const rating = Number(req.body?.score);
+    const comment = String(req.body?.comment || "");
+    if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: "Score 1-5 required" });
+    }
 
     const job = await Job.findById(req.params.id);
     if (!job) return res.status(404).json({ error: "Job not found" });
@@ -288,46 +429,38 @@ export const rateJob = async (req, res) => {
 
     const now = new Date();
 
-    // employer rates freelancer
+    // Employer -> Worker (immutable)
     if (String(job.employerId) === req.user.sub) {
-      if (job.ratingEmployerToFreelancer?.score) return res.status(400).json({ error: "Already rated" });
-      job.ratingEmployerToFreelancer = { score, comment, at: now };
-      await job.save();
-
-      const u = await User.findById(job.assignedTo);
-      if (u) {
-        const nextCount = (u.ratingCount || 0) + 1;
-        const nextAvg = ((u.ratingAvg || 0) * (u.ratingCount || 0) + score) / nextCount;
-        u.ratingAvg = Number(nextAvg.toFixed(2));
-        u.ratingCount = nextCount;
-        await u.save();
+      if (job.employerReview || job.ratingEmployerToFreelancer) {
+        return res.status(400).json({ error: "Already rated" });
       }
+      job.employerReview = { rating, comment, createdAt: now };
+      job.ratingEmployerToFreelancer = { score: rating, comment, at: now }; // mirror
+      await job.save();
+      await bumpUserRating(job.assignedTo, rating);
       return res.json({ ok: true });
     }
 
-    // freelancer rates employer
+    // Worker -> Employer (immutable)
     if (String(job.assignedTo) === req.user.sub) {
-      if (job.ratingFreelancerToEmployer?.score) return res.status(400).json({ error: "Already rated" });
-      job.ratingFreelancerToEmployer = { score, comment, at: now };
-      await job.save();
-
-      const u = await User.findById(job.employerId);
-      if (u) {
-        const nextCount = (u.ratingCount || 0) + 1;
-        const nextAvg = ((u.ratingAvg || 0) * (u.ratingCount || 0) + score) / nextCount;
-        u.ratingAvg = Number(nextAvg.toFixed(2));
-        u.ratingCount = nextCount;
-        await u.save();
+      if (job.freelancerReview || job.ratingFreelancerToEmployer) {
+        return res.status(400).json({ error: "Already rated" });
       }
+      job.freelancerReview = { rating, comment, createdAt: now };
+      job.ratingFreelancerToEmployer = { score: rating, comment, at: now }; // mirror
+      await job.save();
+      await bumpUserRating(job.employerId, rating);
       return res.json({ ok: true });
     }
 
     return res.status(403).json({ error: "Not part of this job" });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error("rateJob error:", e);
+    res.status(500).json({ error: e.message });
+  }
 };
 
-/** Chat: only employer or assigned worker can read/send */
-// GET /jobs/:id/messages
+/** Chat access */
 export const getMessages = async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -340,11 +473,13 @@ export const getMessages = async (req, res) => {
 
     const msgs = await Message.find({ jobId }).sort({ createdAt: 1 }).lean();
     res.json(msgs);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error("getMessages error:", e);
+    res.status(500).json({ error: e.message });
+  }
 };
 
-// POST /jobs/:id/messages
-export const sendMessage = async (req, res) => {
+export const postMessage = async (req, res) => {
   try {
     const jobId = req.params.id;
     const { text = "" } = req.body || {};
@@ -357,11 +492,12 @@ export const sendMessage = async (req, res) => {
 
     const m = await Message.create({ jobId, from: uid, text });
     res.json({ ok: true, message: m });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error("postMessage error:", e);
+    res.status(500).json({ error: e.message });
+  }
 };
 
-/** Optional: employer sends a tip after completion */
-// POST /jobs/:id/tip
 export const tipFreelancer = async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -379,6 +515,6 @@ export const tipFreelancer = async (req, res) => {
       worker.walletBalance = Number(worker.walletBalance || 0) + tip;
       await worker.save();
     }
-    res.json({ ok: true, tip });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    return res.json({ ok: true, tip });
+  } catch (e) { return res.status(500).json({ error: e.message }); }
 };
